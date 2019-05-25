@@ -23,23 +23,60 @@ namespace tim03we\onlinetime;
 
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerJoinEvent;
+use pocketmine\event\player\PlayerPreLoginEvent;
+use pocketmine\event\player\PlayerQuitEvent;
+use pocketmine\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
 
 class OnlineTime extends PluginBase implements Listener {
 
+    public $time = [];
+
+    public function onLoad() {
+        foreach ($this->getServer()->getOnlinePlayers() as $player) {
+            $this->time[$player->getName()] = 0;
+        }
+    }
+
     public function onEnable()
     {
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
         @mkdir($this->getDataFolder() . "players/");
+        $this->getScheduler()->scheduleRepeatingTask(new TimeTask($this), 20);
     }
 
-    public function onJoin(PlayerJoinEvent $event) {
+    public function onLogin(PlayerPreLoginEvent $event) {
+        $player = $event->getPlayer();
+        if(!file_exists($this->getDataFolder() . "players/" . $player->getName() . ".yml")) {
+            $cfg = new Config($this->getDataFolder() . "players/" . $player->getName() . ".yml", Config::YAML);
+            $cfg->set("time", 0);
+            $cfg->save();
+        }
+        $this->time[$player->getName()] = 0;
+    }
+
+    public function onQuit(PlayerQuitEvent $event) {
         $player = $event->getPlayer();
         $cfg = new Config($this->getDataFolder() . "players/" . $player->getName() . ".yml", Config::YAML);
-        if(empty($cfg->get("time"))) {
-            $cfg->set("time", 0);
+        $getTime = $cfg->get("time") + $this->time[$player->getName()];
+        $cfg->set("time", $getTime);
+        $cfg->save();
+    }
+
+    public function onDisable() {
+        foreach ($this->getServer()->getOnlinePlayers() as $player) {
+            $cfg = new Config($this->getDataFolder() . "players/" . $player->getName() . ".yml", Config::YAML);
+            $getTime = $cfg->get("time") + $this->time[$player->getName()];
+            $cfg->set("time", $getTime);
+            $cfg->save();
         }
-        $this->getScheduler()->scheduleRepeatingTask(new TimeTask($this), 20);
+    }
+
+    public function getTime(Player $player) {
+        $name = $player->getName();
+        $cfg = new Config($this->getDataFolder() . "players/$name.yml", Config::YAML);
+        $get = $cfg->get("time") + $this->time[$player->getName()];
+        return "$get";
     }
 }

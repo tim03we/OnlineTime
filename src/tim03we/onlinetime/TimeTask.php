@@ -22,11 +22,10 @@
 namespace tim03we\onlinetime;
 
 use pocketmine\scheduler\Task;
-use pocketmine\utils\Config;
 
 class TimeTask extends Task {
 
-    public function __construct(\tim03we\onlinetime\OnlineTime $plugin)
+    public function __construct(OnlineTime $plugin)
     {
         $this->plugin = $plugin;
     }
@@ -34,10 +33,7 @@ class TimeTask extends Task {
     public function onRun(int $currentTick) : void
     {
         foreach($this->plugin->getServer()->getOnlinePlayers() as $player) {
-            $cfg = new Config($this->plugin->getDataFolder() . "players/" . $player->getName() . ".yml", Config::YAML);
-            $count = $cfg->get("time") + 1;
-            $cfg->set("time", $count);
-            $cfg->save();
+            $this->plugin->time[$player->getName()] = $this->plugin->time[$player->getName()] + 1;
         }
     }
 }

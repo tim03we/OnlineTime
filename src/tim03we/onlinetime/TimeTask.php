@@ -22,6 +22,7 @@
 namespace tim03we\onlinetime;
 
 use pocketmine\scheduler\Task;
+use pocketmine\Server;
 
 class TimeTask extends Task {
 

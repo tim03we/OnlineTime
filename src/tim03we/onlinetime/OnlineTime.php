@@ -22,7 +22,6 @@
 namespace tim03we\onlinetime;
 
 use pocketmine\event\Listener;
-use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerPreLoginEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\Player;
@@ -43,7 +42,12 @@ class OnlineTime extends PluginBase implements Listener {
     {
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
         @mkdir($this->getDataFolder() . "players/");
+        $this->saveResource("settings.yml");
+        $this->cfg = new Config($this->getDataFolder() . "settings.yml", Config::YAML);
         $this->getScheduler()->scheduleRepeatingTask(new TimeTask($this), 20);
+        if($this->cfg->getNested("command.enable", !false)) {
+            $this->getServer()->getCommandMap()->register("onlinetime", new Command($this));
+        }
     }
 
     public function onLogin(PlayerPreLoginEvent $event) {
@@ -78,5 +82,35 @@ class OnlineTime extends PluginBase implements Listener {
         $cfg = new Config($this->getDataFolder() . "players/$name.yml", Config::YAML);
         $get = $cfg->get("time") + $this->time[$player->getName()];
         return "$get";
+    }
+
+    public function getRealTimeHours($player) {
+        $cfg = new Config($this->getDataFolder() . "players/" . $player->getName() . ".yml", Config::YAML);
+        $hours = floor($cfg->get("time") + $this->time[$player->getName()] / 3600);
+        return "$hours";
+    }
+
+    public function getRealTimeMinutes($player) {
+        $cfg = new Config($this->getDataFolder() . "players/" . $player->getName() . ".yml", Config::YAML);
+        $minutes = floor(($cfg->get("time") + $this->time[$player->getName()] / 60) % 60);
+        return "$minutes";
+    }
+
+    public function getRealTimeSeconds($player) {
+        $cfg = new Config($this->getDataFolder() . "players/" . $player->getName() . ".yml", Config::YAML);
+        $seconds = $cfg->get("time") + $this->time[$player->getName()] % 60;
+        return "$seconds";
+    }
+
+    public function getRealTime($player) {
+        $cfg = new Config($this->getDataFolder() . "players/" . $player->getName() . ".yml", Config::YAML);
+        $hours = floor(($cfg->get("time") + $this->time[$player->getName()]) / 3600);
+        $minutes = floor((($cfg->get("time") + $this->time[$player->getName()]) / 60) % 60);
+        $seconds = ($cfg->get("time") + $this->time[$player->getName()]) % 60;
+        $format = $this->cfg->get("time-format");
+        $format = str_replace("{hours}", $hours, $format);
+        $format = str_replace("{minutes}", $minutes, $format);
+        $format = str_replace("{seconds}", $seconds, $format);
+        return "$format";
     }
 }

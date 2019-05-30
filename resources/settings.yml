@@ -1,0 +1,10 @@
+---
+# This format is responsible for the API and the command.
+time-format: "{hours} Hour(s), {minutes} Minute(s) and {seconds} Second(s)"
+
+# Edit the message of the Online Time command.
+# If you don't want the command, just set it to false.
+command:
+    enable: true
+    message: "Your online time: {time}"
+...
